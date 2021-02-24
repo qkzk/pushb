@@ -16,7 +16,7 @@ from pushbullet import Pushbullet
 def create_pb_object():
     '''returns the pushbullet object. Default if your phone can't be found'''
     pushbullet = Pushbullet(api_key=APIKEY)
-    return find_phone(pushbullet)
+    return pushbullet, find_phone(pushbullet)
 
 
 def find_phone(pushbullet):
@@ -24,14 +24,17 @@ def find_phone(pushbullet):
     for device in pushbullet.devices:
         if PHONENAME in device.nickname:
             return device
-    return pushbullet
+    return None
 
 
 class PushBulletSender:
     '''Wrapper for pushbullet push methods'''
 
-    def __init__(self, pushbullet):
+    def __init__(self, pushbullet, phone):
         self.pushbullet = pushbullet
+        if phone is None:
+            phone = pushbullet
+        self.phone = phone
 
     def send_link(self, link: str = None, description: str = None) -> dict:
         '''send a link to your phone'''
@@ -40,7 +43,7 @@ class PushBulletSender:
         if link is None:
             raise ValueError(
                 "You must provide a link : -l https://example.com")
-        return self.pushbullet.push_link(description, link)
+        return self.phone.push_link(description, link)
 
     def send_note(self, body: str = None, title: str = None) -> dict:
         '''send a note to your phone'''
@@ -48,7 +51,7 @@ class PushBulletSender:
             raise ValueError("You must provide a body : -n hello")
         if title is None:
             title = body
-        return self.pushbullet.push_note(title, body)
+        return self.phone.push_note(title, body)
 
     def send_file(self, filepath: str, name: str = None) -> dict:
         '''send a local file to your phone'''
@@ -57,7 +60,7 @@ class PushBulletSender:
         with open(filepath, "rb") as uploaded_file:
             file_data = self.pushbullet.upload_file(uploaded_file, name)
 
-        return self.pushbullet.push_file(**file_data)
+        return self.phone.push_file(**file_data)
 
     def send_uploaded_file(self,
                            file_url: str,
@@ -70,9 +73,9 @@ class PushBulletSender:
             file_type = guess_mime_type(file_url)
             if file_type == "":
                 raise ValueError("Couldn't guess the file type, can't send !")
-        return self.pushbullet.push_file(file_url=file_url,
-                                         file_name=file_name,
-                                         file_type=file_type)
+        return self.phone.push_file(file_url=file_url,
+                                    file_name=file_name,
+                                    file_type=file_type)
 
 
 def guess_mime_type(file_url: str) -> str:
@@ -122,7 +125,7 @@ def parse_args():
                         "- The path of the file to send")
     action.add_argument("-n", "--note",
                         type=str,
-                        help="-n blablabla... "
+                        help="-n don't forget the milk... "
                         "- The body of your note")
     action.add_argument("--TESTS",
                         action="store_true",
@@ -152,8 +155,8 @@ def push(pushbullet: PushBulletSender, args) -> dict:
 def main():
     '''main program : parse arguments, create PB object, push notification'''
     args = parse_args()
-    pushbullet = create_pb_object()
-    pb_sender = PushBulletSender(pushbullet)
+    pushbullet, phone = create_pb_object()
+    pb_sender = PushBulletSender(pushbullet, phone)
     response = push(pb_sender, args)
     print(response)
 
@@ -182,30 +185,30 @@ def test_pushbullet():
 
 def test_send_link():
     '''sending a link'''
-    pushbullet = create_pb_object()
-    pb_sender = PushBulletSender(pushbullet)
+    pushbullet, phone = create_pb_object()
+    pb_sender = PushBulletSender(pushbullet, phone)
     assert pb_sender.send_link(
         link="https://qkzk.xyz", description="qkzk") != {}
 
 
 def test_send_note():
     '''send a note'''
-    pushbullet = create_pb_object()
-    pb_sender = PushBulletSender(pushbullet)
+    pushbullet, phone = create_pb_object()
+    pb_sender = PushBulletSender(pushbullet, phone)
     assert pb_sender.send_note(body="body", title="title") != {}
 
 
 def test_send_file():
     '''send a local file'''
-    pushbullet = create_pb_object()
-    pb_sender = PushBulletSender(pushbullet)
+    pushbullet, phone = create_pb_object()
+    pb_sender = PushBulletSender(pushbullet, phone)
     assert pb_sender.send_link(link="./hello.txt", description="salut") != {}
 
 
 def test_send_uploaded_file():
     '''send an uploaded file'''
-    pushbullet = create_pb_object()
-    pb_sender = PushBulletSender(pushbullet)
+    pushbullet, phone = create_pb_object()
+    pb_sender = PushBulletSender(pushbullet, phone)
     assert pb_sender.send_uploaded_file(
         file_url="https://i.imgur.com/IAYZ20i.jpg",
         file_type="image/jpeg",
