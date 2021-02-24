@@ -142,7 +142,7 @@ def push(pushbullet: PushBulletSender, args) -> dict:
     if args.path:
         return pushbullet.send_file(args.path, args.description)
     if args.url:
-        return pushbullet.send_uploaded_file(args.link, args.type,
+        return pushbullet.send_uploaded_file(args.url, args.type,
                                              args.description)
     if args.note:
         return pushbullet.send_note(args.note, args.description)
