@@ -1,6 +1,6 @@
 # PushBullet Sender
 
-Push something to your phone from the command line with pushbullet
+Push something with pushbullet to your phone from the command line 
 
 # Usage
 
