@@ -39,7 +39,7 @@ $ python pushb.py --TESTS
 
 # Installation
 
-You need `pushbullet` : "A simple python client for pushbullet.com"
+You need [`pushbullet`](https://github.com/rbrcsk/pushbullet.py/blob/master/setup.py) : "A simple python client for pushbullet.com"
 
 ```bash
 $ pip install pushbullet.py
